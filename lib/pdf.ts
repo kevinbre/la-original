@@ -2,7 +2,7 @@ import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
 import { Invoice, OrderWithItems } from '@/types'
 
-export function generateInvoicePDF(invoice: Invoice | OrderWithItems, type: 'invoice' | 'order' = 'invoice') {
+export function generateInvoicePDF(invoice: Invoice | OrderWithItems, type: 'invoice' | 'quote' | 'order' = 'invoice') {
   const doc = new jsPDF()
   
   // Header
@@ -122,7 +122,7 @@ export function generateInvoicePDF(invoice: Invoice | OrderWithItems, type: 'inv
   return doc
 }
 
-export function downloadInvoicePDF(invoice: Invoice | OrderWithItems, type: 'invoice' | 'order' = 'invoice') {
+export function downloadInvoicePDF(invoice: Invoice | OrderWithItems, type: 'invoice' | 'quote' | 'order' = 'invoice') {
   const doc = generateInvoicePDF(invoice, type)
   const filename = type === 'invoice' 
     ? `factura-${(invoice as Invoice).invoice_number}.pdf`
