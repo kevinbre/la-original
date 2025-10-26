@@ -36,7 +36,28 @@ export default function Header() {
   const [user, setUser] = useState<any>(null)
   const [profile, setProfile] = useState<Profile | null>(null)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [isIPhone, setIsIPhone] = useState(false)
   const totalItems = useCartStore((state) => state.getTotalItems())
+
+  // Detect iPhone with Dynamic Island (iPhone 14 Pro and later)
+  useEffect(() => {
+    const detectIPhone = () => {
+      const ua = navigator.userAgent
+      const isIOS = /iPhone/i.test(ua)
+
+      // Check for Dynamic Island support (screen height and safe area)
+      if (isIOS && typeof window !== 'undefined') {
+        // iPhone 14 Pro has screen height 2556px, iPhone 14 Pro Max 2796px
+        const screenHeight = window.screen.height
+        const hasDynamicIsland = screenHeight >= 2556 ||
+          (CSS.supports && CSS.supports('padding-top: env(safe-area-inset-top)'))
+
+        setIsIPhone(isIOS || hasDynamicIsland)
+      }
+    }
+
+    detectIPhone()
+  }, [])
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -94,7 +115,10 @@ export default function Header() {
   }
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <header className={cn(
+      "sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60",
+      isIPhone && "pt-safe"
+    )}>
       <nav className="container mx-auto flex h-16 items-center px-4">
         {/* Logo */}
         <Link href="/" className="flex items-center mr-6">

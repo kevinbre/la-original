@@ -17,7 +17,7 @@ export const metadata: Metadata = {
   },
   appleWebApp: {
     capable: true,
-    statusBarStyle: 'default',
+    statusBarStyle: 'black-translucent',
     title: 'La Original',
   },
   openGraph: {
@@ -25,6 +25,15 @@ export const metadata: Metadata = {
     description: 'Tu distribuidora de confianza',
     images: ['/logo.png'],
   },
+  other: {
+    'theme-color': '#000000',
+  },
+}
+
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover',
 }
 
 export default function RootLayout({
@@ -34,6 +43,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="es" suppressHydrationWarning>
+      <head>
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+      </head>
       <body className={inter.className}>
         <ThemeProvider
           attribute="class"
