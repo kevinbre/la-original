@@ -11,13 +11,6 @@ export const metadata: Metadata = {
   title: 'La Original - Distribuidora de Bebidas',
   description: 'Tu distribuidora de confianza',
   manifest: '/manifest.json',
-  themeColor: '#b85c2f',
-  viewport: {
-    width: 'device-width',
-    initialScale: 1,
-    maximumScale: 5,
-    userScalable: true,
-  },
   icons: {
     icon: '/favicon.png',
     apple: '/apple-touch-icon.png',
@@ -33,6 +26,12 @@ export const metadata: Metadata = {
     images: ['/logo.png'],
   },
 }
+
+export const viewport = {
+  themeColor: '#b85c2f',
+  width: "device-width",
+  initialScale: 1,
+};
 
 export default function RootLayout({
   children,

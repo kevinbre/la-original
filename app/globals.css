@@ -47,12 +47,11 @@
     --input: 240 3.7% 15.9%;
     --ring: 18 70% 55%;
   }
-}
 
-@layer base {
   * {
     @apply border-border;
   }
+
   body {
     @apply bg-background text-foreground;
   }
@@ -72,7 +71,9 @@
 
   /* Touch-friendly mobile optimizations */
   @media (max-width: 768px) {
-    button, a {
+
+    button,
+    a {
       min-height: 44px;
       min-width: 44px;
     }
