@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import { OrderWithItems, PriceList, ORDER_STATUS_LABELS, Profile } from '@/types'
 import { toast } from 'sonner'
-import { downloadInvoicePDF } from '@/lib/pdf'
+import { downloadInvoicePDF, loadCompanySettings } from '@/lib/pdf'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -360,9 +360,10 @@ export default function AdminPedidoDetallePage() {
     setHasChanges(false)
   }
 
-  const handleDownloadPDF = () => {
+  const handleDownloadPDF = async () => {
     if (order) {
-      downloadInvoicePDF(order, 'order')
+      const companySettings = await loadCompanySettings()
+      downloadInvoicePDF(order, 'order', companySettings || undefined)
       toast.success('Descargando factura PDF...')
     }
   }

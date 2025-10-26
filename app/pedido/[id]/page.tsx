@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import { OrderWithItems, ORDER_STATUS_LABELS } from '@/types'
 import { toast } from 'sonner'
-import { downloadInvoicePDF } from '@/lib/pdf'
+import { downloadInvoicePDF, loadCompanySettings } from '@/lib/pdf'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -140,7 +140,7 @@ export default function PedidoDetallePage() {
     })
   }
 
-  const handleDownloadPDF = () => {
+  const handleDownloadPDF = async () => {
     if (!order) return
 
     // Convert order to have the required items structure for PDF
@@ -150,7 +150,8 @@ export default function PedidoDetallePage() {
       total: calculateTotal(),
     }
 
-    downloadInvoicePDF(orderForPDF, 'order')
+    const companySettings = await loadCompanySettings()
+    downloadInvoicePDF(orderForPDF, 'order', companySettings || undefined)
     toast.success('Presupuesto descargado', {
       description: 'El PDF se ha descargado correctamente'
     })

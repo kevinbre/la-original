@@ -14,7 +14,7 @@ import { CheckCircle, XCircle, Package, Phone, Mail, User, Download, ArrowLeft }
 import { Skeleton } from '@/components/ui/skeleton'
 import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Label } from '@/components/ui/label'
-import { downloadInvoicePDF } from '@/lib/pdf'
+import { downloadInvoicePDF, loadCompanySettings } from '@/lib/pdf'
 
 export default function ConfirmarPresupuestoPage() {
   const router = useRouter()
@@ -140,9 +140,10 @@ export default function ConfirmarPresupuestoPage() {
     }
   }
 
-  const handleDownloadPDF = () => {
+  const handleDownloadPDF = async () => {
     if (order) {
-      downloadInvoicePDF(order, 'quote')
+      const companySettings = await loadCompanySettings()
+      downloadInvoicePDF(order, 'quote', companySettings || undefined)
       toast.success('Descargando presupuesto en PDF...')
     }
   }
