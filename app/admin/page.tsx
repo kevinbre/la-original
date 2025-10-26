@@ -20,7 +20,9 @@ import {
   Loader2,
   Settings,
   DollarSign,
-  LayoutDashboard
+  LayoutDashboard,
+  Users,
+  ShoppingCart
 } from 'lucide-react'
 
 export default function AdminPage() {
@@ -143,15 +145,27 @@ export default function AdminPage() {
       </div>
 
       {/* Action Buttons */}
-      <div className="flex flex-wrap gap-3 mb-8">
-        <Link href="/admin/productos">
-          <Button>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-8">
+        <Link href="/admin/crear-pedido" className="w-full">
+          <Button className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800">
+            <ShoppingCart className="mr-2 h-4 w-4" />
+            Crear Pedido
+          </Button>
+        </Link>
+        <Link href="/admin/clientes" className="w-full">
+          <Button className="w-full">
+            <Users className="mr-2 h-4 w-4" />
+            Gestionar Clientes
+          </Button>
+        </Link>
+        <Link href="/admin/productos" className="w-full">
+          <Button variant="outline" className="w-full">
             <Settings className="mr-2 h-4 w-4" />
             Gestionar Productos
           </Button>
         </Link>
-        <Link href="/admin/precios">
-          <Button variant="outline">
+        <Link href="/admin/precios" className="w-full">
+          <Button variant="outline" className="w-full">
             <DollarSign className="mr-2 h-4 w-4" />
             Listas de Precios
           </Button>

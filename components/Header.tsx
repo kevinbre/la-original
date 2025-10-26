@@ -97,13 +97,12 @@ export default function Header() {
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <nav className="container mx-auto flex h-16 items-center px-4">
         {/* Logo */}
-        <Link href="/" className="flex items-center space-x-2 mr-6">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold text-lg">
-            LO
-          </div>
-          <span className="hidden font-bold sm:inline-block text-xl">
-            LA ORIGINAL
-          </span>
+        <Link href="/" className="flex items-center mr-6">
+          <img
+            src="/logo.png"
+            alt="La Original"
+            className="h-12 w-12 hover:scale-105 transition-transform duration-200"
+          />
         </Link>
 
         {/* Desktop Navigation */}

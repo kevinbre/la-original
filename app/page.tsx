@@ -29,9 +29,13 @@ export default function Home() {
               La distribuidora #1 de la zona
             </Badge>
 
-            <h1 className="mb-6 text-5xl font-black tracking-tight sm:text-7xl lg:text-8xl">
-              LA ORIGINAL
-            </h1>
+            <div className="mb-6 flex justify-center">
+              <img
+                src="/logo.png"
+                alt="La Original"
+                className="h-32 w-32 sm:h-40 sm:w-40 lg:h-48 lg:w-48 drop-shadow-2xl"
+              />
+            </div>
 
             <p className="mb-4 text-xl font-medium text-muted-foreground sm:text-2xl">
               Distribuidora de bebidas

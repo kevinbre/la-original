@@ -165,6 +165,7 @@ export default function CarritoPage() {
         order_id: order.id,
         product_id: item.product.id,
         product_name: item.product.name,
+        product_description: item.product.description || null,
         quantity: item.quantity,
       }))
 
