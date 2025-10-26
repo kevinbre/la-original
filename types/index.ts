@@ -2,14 +2,10 @@ export type UserRole = 'admin' | 'customer'
 
 export type OrderStatus =
   | 'pendiente'
-  | 'en_revision'
-  | 'presupuestado'
   | 'confirmado'
   | 'en_preparacion'
-  | 'listo_entrega'
-  | 'completado'
-  | 'cancelado'
-  | 'rechazado'
+  | 'preparado'
+  | 'entregado'
 
 export interface Profile {
   id: string
@@ -122,26 +118,18 @@ export interface CartItem {
 
 export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
   pendiente: 'Pendiente',
-  en_revision: 'En Revisión',
-  presupuestado: 'Presupuestado',
   confirmado: 'Confirmado',
   en_preparacion: 'En Preparación',
-  listo_entrega: 'Listo para Entrega',
-  completado: 'Completado',
-  cancelado: 'Cancelado',
-  rechazado: 'Rechazado',
+  preparado: 'Preparado',
+  entregado: 'Entregado',
 }
 
 export const ORDER_STATUS_COLORS: Record<OrderStatus, string> = {
-  pendiente: 'bg-yellow-100 text-yellow-800',
-  en_revision: 'bg-blue-100 text-blue-800',
-  presupuestado: 'bg-purple-100 text-purple-800',
-  confirmado: 'bg-green-100 text-green-800',
-  en_preparacion: 'bg-orange-100 text-orange-800',
-  listo_entrega: 'bg-teal-100 text-teal-800',
-  completado: 'bg-gray-100 text-gray-800',
-  cancelado: 'bg-red-100 text-red-800',
-  rechazado: 'bg-rose-100 text-rose-800',
+  pendiente: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
+  confirmado: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
+  en_preparacion: 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200',
+  preparado: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
+  entregado: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200',
 }
 
 export interface AdminNotification {

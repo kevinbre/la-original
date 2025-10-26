@@ -58,6 +58,7 @@ export default function CrearPedidoPage() {
   const [notes, setNotes] = useState('')
   const [deliveryDate, setDeliveryDate] = useState('')
   const [searchCustomer, setSearchCustomer] = useState('')
+  const [searchProduct, setSearchProduct] = useState('')
   const [showNewCustomerDialog, setShowNewCustomerDialog] = useState(false)
   const [showChangeClientDialog, setShowChangeClientDialog] = useState(false)
   const [newCustomerData, setNewCustomerData] = useState({
@@ -264,7 +265,7 @@ export default function CrearPedidoPage() {
           customer_phone: selectedCustomer.phone,
           customer_id: selectedCustomer.id,
           price_list_id: selectedPriceList.id,
-          status: 'pendiente',
+          status: 'confirmado', // Admin orders are automatically confirmed
           notes: notes || null,
           delivery_date: deliveryDate || null,
           total,
@@ -517,8 +518,27 @@ export default function CrearPedidoPage() {
                 ) : productPrices.length === 0 ? (
                   <p className="text-center py-8 text-muted-foreground">Esta lista no tiene productos</p>
                 ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {productPrices.map((pp) => {
+                  <>
+                    {/* Product Search */}
+                    <div className="mb-4">
+                      <div className="relative">
+                        <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          placeholder="Buscar productos..."
+                          value={searchProduct}
+                          onChange={(e) => setSearchProduct(e.target.value)}
+                          className="pl-9"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {productPrices
+                      .filter(pp =>
+                        pp.product.name.toLowerCase().includes(searchProduct.toLowerCase()) ||
+                        pp.product.description?.toLowerCase().includes(searchProduct.toLowerCase())
+                      )
+                      .map((pp) => {
                       const isAdded = orderItems.some(item => item.product.id === pp.product.id)
                       return (
                         <Card
@@ -562,6 +582,7 @@ export default function CrearPedidoPage() {
                       )
                     })}
                   </div>
+                  </>
                 )}
               </CardContent>
             </Card>

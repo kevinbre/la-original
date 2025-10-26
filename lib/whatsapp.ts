@@ -9,7 +9,7 @@ export function generateOrderWhatsAppMessage(
   customerName: string,
   guestToken?: string
 ): string {
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://laoriginal.vercel.app'
   let message = `Hola! Soy ${customerName} y acabo de realizar un pedido en La Original.\n\n`
   message += `*Código de Pedido:* ${orderNumber}\n`
 
@@ -17,10 +17,12 @@ export function generateOrderWhatsAppMessage(
     message += `*Token de Acceso:* ${guestToken}\n`
   }
 
-  message += `\nPueden ver los detalles en: ${appUrl}/pedidos/${orderNumber}`
-
+  // Use different URL structure based on whether it's a guest order or admin order
   if (guestToken) {
-    message += `?token=${guestToken}`
+    message += `\nPueden ver los detalles en: ${appUrl}/pedido/${orderNumber}?token=${guestToken}`
+  } else {
+    // Admin orders don't need token
+    message += `\nPueden ver los detalles en: ${appUrl}/pedido/${orderNumber}`
   }
 
   return message

@@ -134,16 +134,10 @@ export default function MisPedidosPage() {
       ) : (
         <div className="space-y-6">
           {orders.map((order) => {
-            const statusVariant =
-              order.status === 'confirmado' || order.status === 'completado' ? 'success' :
-              order.status === 'rechazado' || order.status === 'cancelado' ? 'destructive' :
-              order.status === 'presupuestado' ? 'default' :
-              'secondary'
-
             return (
               <Card key={order.id}>
                 <CardHeader>
-                  <div className="flex items-start justify-between">
+                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
                     <div>
                       <CardTitle className="flex items-center gap-2">
                         <Package className="h-5 w-5" />
@@ -159,9 +153,9 @@ export default function MisPedidosPage() {
                         })}
                       </CardDescription>
                     </div>
-                    <Badge variant={statusVariant as any}>
+                    <div className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap ${ORDER_STATUS_COLORS[order.status as keyof typeof ORDER_STATUS_COLORS]}`}>
                       {ORDER_STATUS_LABELS[order.status as keyof typeof ORDER_STATUS_LABELS]}
-                    </Badge>
+                    </div>
                   </div>
                 </CardHeader>
 
