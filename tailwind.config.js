@@ -5,8 +5,6 @@ module.exports = {
   content: [
     path.join(__dirname, 'app/**/*.{js,ts,jsx,tsx,mdx}'),
     path.join(__dirname, 'components/**/*.{js,ts,jsx,tsx,mdx}'),
-    path.join(__dirname, 'pages/**/*.{js,ts,jsx,tsx,mdx}'),
-    path.join(__dirname, 'ui/**/*.{js,ts,jsx,tsx,mdx}'),
   ],
   ignoreFiles: [
     '**/.next/**',
