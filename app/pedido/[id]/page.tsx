@@ -124,7 +124,7 @@ export default function PedidoDetallePage() {
 
   const calculateTotal = () => {
     if (!order?.order_items) return 0
-    return order.order_items.reduce((sum, item) => {
+    return order.order_items.reduce((sum: any, item: any) => {
       const price = item.custom_price || item.unit_price || 0
       return sum + price * item.quantity
     }, 0)
@@ -184,7 +184,7 @@ export default function PedidoDetallePage() {
   }
 
   const total = calculateTotal()
-  const hasPrecios = order.order_items.some(item => item.unit_price || item.custom_price)
+  const hasPrecios = order.order_items.some((item: any) => item.unit_price || item.custom_price)
 
   return (
     <div className="container mx-auto px-4 py-8 space-y-6">
@@ -312,10 +312,10 @@ export default function PedidoDetallePage() {
                   <span>{order.customer_email}</span>
                 </div>
               )}
-              {order.delivery_date && (
+              {order?.delivery_date && (
                 <div className="flex items-center gap-2 text-sm">
                   <Calendar className="h-4 w-4 text-muted-foreground" />
-                  <span>Entrega: {new Date(order.delivery_date).toLocaleDateString('es-AR')}</span>
+                  <span>Entrega: {new Date(order?.delivery_date).toLocaleDateString('es-AR')}</span>
                 </div>
               )}
             </div>
@@ -359,7 +359,7 @@ export default function PedidoDetallePage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {order.order_items.map((item) => {
+              {order.order_items.map((item: any) => {
                 const price = item.custom_price || item.unit_price
                 const subtotal = price ? price * item.quantity : null
 

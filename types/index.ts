@@ -87,6 +87,8 @@ export interface OrderItem {
 export interface OrderWithItems extends Order {
   items: OrderItem[]
   price_list_name?: string
+  order_items?: any
+  delivery_date: any
 }
 
 export interface Invoice {
