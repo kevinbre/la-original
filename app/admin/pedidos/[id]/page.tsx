@@ -559,7 +559,7 @@ export default function AdminPedidoDetallePage() {
                     variant="outline"
                     size="sm"
                     onClick={() => {
-                      navigator.clipboard.writeText(order.guest_token)
+                      navigator.clipboard.writeText(order?.guest_token ?? "")
                       toast.success('Token copiado')
                     }}
                   >
