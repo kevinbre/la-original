@@ -365,7 +365,7 @@ export default function AdminPedidoDetallePage() {
   const handleDownloadPDF = async () => {
     if (order) {
       const companySettings = await loadCompanySettings()
-      downloadInvoicePDF(order, 'order', companySettings || undefined)
+      await downloadInvoicePDF(order, 'order', companySettings || undefined)
       toast.success('Descargando factura PDF...')
     }
   }

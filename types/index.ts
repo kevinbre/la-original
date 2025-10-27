@@ -6,6 +6,8 @@ export type OrderStatus =
   | 'en_preparacion'
   | 'preparado'
   | 'entregado'
+  | 'rechazado'
+  | 'cancelado'
 
 export interface Profile {
   id: string
@@ -123,6 +125,8 @@ export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
   en_preparacion: 'En Preparación',
   preparado: 'Preparado',
   entregado: 'Entregado',
+  rechazado: 'Rechazado',
+  cancelado: 'Cancelado',
 }
 
 export const ORDER_STATUS_COLORS: Record<OrderStatus, string> = {
@@ -131,6 +135,8 @@ export const ORDER_STATUS_COLORS: Record<OrderStatus, string> = {
   en_preparacion: 'bg-orange-600 text-white dark:bg-orange-700 dark:text-white',
   preparado: 'bg-blue-600 text-white dark:bg-blue-700 dark:text-white',
   entregado: 'bg-gray-600 text-white dark:bg-gray-700 dark:text-white',
+  rechazado: 'bg-red-700 text-white dark:bg-red-800 dark:text-white',
+  cancelado: 'bg-gray-700 text-white dark:bg-gray-800 dark:text-white',
 }
 
 export interface AdminNotification {

@@ -3,6 +3,26 @@ import autoTable from 'jspdf-autotable'
 import { Invoice, OrderWithItems } from '@/types'
 import { supabase } from '@/lib/supabase'
 
+// Helper function to load image as base64
+async function loadImageAsBase64(url: string): Promise<string | null> {
+  try {
+    // If it's a relative URL, make it absolute
+    const imageUrl = url.startsWith('http') ? url : `${window.location.origin}${url}`
+    const response = await fetch(imageUrl)
+    const blob = await response.blob()
+
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onloadend = () => resolve(reader.result as string)
+      reader.onerror = reject
+      reader.readAsDataURL(blob)
+    })
+  } catch (error) {
+    console.error('Error loading image:', error)
+    return null
+  }
+}
+
 export interface CompanySettings {
   company_name: string
   tagline: string | null
@@ -35,13 +55,17 @@ export async function loadCompanySettings(): Promise<CompanySettings | null> {
   }
 }
 
-export function generateInvoicePDF(
+export async function generateInvoicePDF(
   invoice: Invoice | OrderWithItems,
   type: 'invoice' | 'quote' | 'order' = 'invoice',
   companySettings?: CompanySettings
 ) {
   const doc = new jsPDF()
   const orangeColor: [number, number, number] = [184, 92, 47]
+
+  // Load logo image if available
+  const logoUrl = companySettings?.logo_url || '/logo.png'
+  const logoBase64 = await loadImageAsBase64(logoUrl)
 
   // Use company settings or defaults
   const companyName = companySettings?.company_name || 'LA ORIGINAL'
@@ -55,24 +79,37 @@ export function generateInvoicePDF(
 
   let yPos = 20
 
-  // Logo (if available) - left side
-  if (companySettings?.logo_url) {
+  // Add watermark logo in center (large, transparent)
+  if (logoBase64) {
     try {
-      // Note: In production, you'd need to load the image as base64
-      // For now, we'll just reserve space for it
-      doc.setDrawColor(...orangeColor)
-      doc.setLineWidth(1)
-      doc.rect(15, 15, 40, 40)
-      doc.setFontSize(8)
-      doc.setTextColor(150, 150, 150)
-      doc.text('LOGO', 35, 35, { align: 'center' })
+      const pageWidth = doc.internal.pageSize.getWidth()
+      const pageHeight = doc.internal.pageSize.getHeight()
+      const watermarkSize = 120
+      const watermarkX = (pageWidth - watermarkSize) / 2
+      const watermarkY = (pageHeight - watermarkSize) / 2
+
+      // Set opacity for watermark
+      doc.saveGraphicsState()
+      // @ts-ignore - GState exists but TypeScript doesn't recognize it
+      doc.setGState(new doc.GState({ opacity: 0.1 }))
+      doc.addImage(logoBase64, 'PNG', watermarkX, watermarkY, watermarkSize, watermarkSize)
+      doc.restoreGraphicsState()
     } catch (e) {
-      // If logo fails, continue without it
+      console.error('Error adding watermark:', e)
     }
   }
 
-  // Company info - left side
-  const leftStart = companySettings?.logo_url ? 60 : 15
+  // Logo in top left corner
+  if (logoBase64) {
+    try {
+      doc.addImage(logoBase64, 'PNG', 15, 15, 35, 35)
+    } catch (e) {
+      console.error('Error adding logo:', e)
+    }
+  }
+
+  // Company info - right of logo
+  const leftStart = logoBase64 ? 55 : 15
   doc.setFontSize(18)
   doc.setTextColor(...orangeColor)
   doc.setFont('helvetica', 'bold')
@@ -290,12 +327,12 @@ export function generateInvoicePDF(
   return doc
 }
 
-export function downloadInvoicePDF(
+export async function downloadInvoicePDF(
   invoice: Invoice | OrderWithItems,
   type: 'invoice' | 'quote' | 'order' = 'invoice',
   companySettings?: CompanySettings
 ) {
-  const doc = generateInvoicePDF(invoice, type, companySettings)
+  const doc = await generateInvoicePDF(invoice, type, companySettings)
   const filename = type === 'invoice'
     ? `factura-${(invoice as Invoice).invoice_number}.pdf`
     : `pedido-${(invoice as OrderWithItems).order_number}.pdf`

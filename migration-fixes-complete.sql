@@ -4,9 +4,10 @@
 -- 1. Add color column to price_lists
 ALTER TABLE price_lists ADD COLUMN IF NOT EXISTS color VARCHAR(7) DEFAULT '#b85c2f';
 
--- 2. Remove obsolete columns from orders
-ALTER TABLE orders DROP COLUMN IF EXISTS quote_rejected_at;
-ALTER TABLE orders DROP COLUMN IF EXISTS quote_confirmed_at;
+-- 2. Add quote rejection and confirmation columns to orders (for rechazado/cancelado states)
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS quote_rejected_at TIMESTAMPTZ;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS quote_rejected_reason TEXT;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS quote_confirmed_at TIMESTAMPTZ;
 
 -- 3. Ensure guest_token is always generated (even for admin orders)
 -- This is handled in the application code

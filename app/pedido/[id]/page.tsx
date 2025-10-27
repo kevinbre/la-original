@@ -151,7 +151,7 @@ export default function PedidoDetallePage() {
     }
 
     const companySettings = await loadCompanySettings()
-    downloadInvoicePDF(orderForPDF, 'order', companySettings || undefined)
+    await downloadInvoicePDF(orderForPDF, 'order', companySettings || undefined)
     toast.success('Presupuesto descargado', {
       description: 'El PDF se ha descargado correctamente'
     })
@@ -228,7 +228,7 @@ export default function PedidoDetallePage() {
                 Creado el {formatDate(order.created_at)}
               </CardDescription>
             </div>
-            <Badge variant={order.status === 'completado' ? 'default' : 'secondary'} className="text-sm">
+            <Badge variant={order.status === 'entregado' ? 'default' : 'secondary'} className="text-sm">
               {ORDER_STATUS_LABELS[order.status as keyof typeof ORDER_STATUS_LABELS]}
             </Badge>
           </div>

@@ -143,7 +143,7 @@ export default function ConfirmarPresupuestoPage() {
   const handleDownloadPDF = async () => {
     if (order) {
       const companySettings = await loadCompanySettings()
-      downloadInvoicePDF(order, 'quote', companySettings || undefined)
+      await downloadInvoicePDF(order, 'quote', companySettings || undefined)
       toast.success('Descargando presupuesto en PDF...')
     }
   }
