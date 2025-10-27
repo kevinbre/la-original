@@ -27,7 +27,8 @@ import {
   ShoppingCart,
   Search,
   MessageCircle,
-  Building2
+  Building2,
+  Shield
 } from 'lucide-react'
 
 export default function AdminPage() {
@@ -59,8 +60,8 @@ export default function AdminPage() {
       .eq('id', session.user.id)
       .single()
 
-    if (!profileData || profileData.role !== 'admin') {
-      toast.error('No tenés permisos de administrador')
+    if (!profileData || (profileData.role !== 'admin' && profileData.role !== 'empleado')) {
+      toast.error('No tenés permisos para acceder al panel')
       router.push('/')
       return
     }
@@ -190,21 +191,29 @@ export default function AdminPage() {
         </Link>
       </div>
 
-      {/* Configuration Buttons */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-8">
-        <Link href="/admin/whatsapp" className="w-full">
-          <Button variant="outline" className="w-full border-green-200 hover:bg-green-50 dark:border-green-900 dark:hover:bg-green-950">
-            <MessageCircle className="mr-2 h-4 w-4 text-green-600" />
-            Configurar WhatsApp
-          </Button>
-        </Link>
-        <Link href="/admin/configuracion" className="w-full">
-          <Button variant="outline" className="w-full">
-            <Building2 className="mr-2 h-4 w-4" />
-            Configuración Empresa
-          </Button>
-        </Link>
-      </div>
+      {/* Configuration Buttons - Solo para Admins */}
+      {profile?.role === 'admin' && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-8">
+          <Link href="/admin/usuarios" className="w-full">
+            <Button variant="outline" className="w-full border-purple-200 hover:bg-purple-50 dark:border-purple-900 dark:hover:bg-purple-950">
+              <Shield className="mr-2 h-4 w-4 text-purple-600" />
+              Gestionar Usuarios
+            </Button>
+          </Link>
+          <Link href="/admin/whatsapp" className="w-full">
+            <Button variant="outline" className="w-full border-green-200 hover:bg-green-50 dark:border-green-900 dark:hover:bg-green-950">
+              <MessageCircle className="mr-2 h-4 w-4 text-green-600" />
+              Configurar WhatsApp
+            </Button>
+          </Link>
+          <Link href="/admin/configuracion" className="w-full">
+            <Button variant="outline" className="w-full">
+              <Building2 className="mr-2 h-4 w-4" />
+              Configuración Empresa
+            </Button>
+          </Link>
+        </div>
+      )}
 
       {/* Stats */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-8">
