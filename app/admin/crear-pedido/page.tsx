@@ -10,7 +10,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { toast } from 'sonner'
-import { Search, Trash2, ShoppingCart, Calendar, UserPlus, DollarSign, Check } from 'lucide-react'
+import { Search, Trash2, ShoppingCart, Calendar, UserPlus, DollarSign, Check, ArrowLeft } from 'lucide-react'
 import { Product } from '@/types'
 
 interface Customer {
@@ -256,10 +256,17 @@ export default function CrearPedidoPage() {
 
       if (orderNumberError) throw orderNumberError
 
+      // Generate guest token for sharing
+      const { data: guestToken, error: guestTokenError } = await supabase
+        .rpc('generate_guest_token')
+
+      if (guestTokenError) throw guestTokenError
+
       const { data: order, error: orderError } = await supabase
         .from('orders')
         .insert({
           order_number: orderNumber,
+          guest_token: guestToken,
           customer_name: selectedCustomer.name,
           customer_email: selectedCustomer.email || null,
           customer_phone: selectedCustomer.phone,
@@ -293,8 +300,7 @@ export default function CrearPedidoPage() {
       if (itemsError) throw itemsError
 
       toast.success(`Pedido ${order.order_number} creado exitosamente`)
-      router.push('/admin')
-      router.refresh()
+      router.push(`/admin/pedidos/${order.id}`)
     } catch (error) {
       console.error('Error creating order:', error)
       toast.error('Error al crear el pedido')
@@ -312,26 +318,30 @@ export default function CrearPedidoPage() {
     <div className="container mx-auto px-4 py-8 max-w-7xl">
       {/* Header */}
       <div className="mb-8">
+        <Button variant="ghost" onClick={() => router.push('/admin')} className="mb-4">
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Volver al Panel
+        </Button>
         <h1 className="text-3xl font-bold mb-2">Crear Nuevo Pedido</h1>
         <p className="text-muted-foreground">Completá los 3 pasos para generar el pedido</p>
       </div>
 
       {/* Progress Steps */}
-      <div className="mb-8 flex items-center justify-center gap-4">
+      <div className="mb-8 flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4">
         <div className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${selectedCustomer ? 'bg-primary text-primary-foreground shadow-md' : 'bg-muted'}`}>
           <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold ${selectedCustomer ? 'bg-white text-primary' : 'bg-background text-muted-foreground'}`}>
             {selectedCustomer ? <Check className="h-5 w-5" /> : '1'}
           </div>
           <span className="font-medium">Cliente</span>
         </div>
-        <div className={`h-1 w-16 rounded ${selectedCustomer ? 'bg-primary' : 'bg-border'}`}></div>
+        <div className={`h-1 w-8 sm:w-16 rounded ${selectedCustomer ? 'bg-primary' : 'bg-border'}`}></div>
         <div className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${selectedPriceList ? 'bg-primary text-primary-foreground shadow-md' : 'bg-muted'}`}>
           <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold ${selectedPriceList ? 'bg-white text-primary' : 'bg-background text-muted-foreground'}`}>
             {selectedPriceList ? <Check className="h-5 w-5" /> : '2'}
           </div>
           <span className="font-medium">Lista</span>
         </div>
-        <div className={`h-1 w-16 rounded ${selectedPriceList ? 'bg-primary' : 'bg-border'}`}></div>
+        <div className={`h-1 w-8 sm:w-16 rounded ${selectedPriceList ? 'bg-primary' : 'bg-border'}`}></div>
         <div className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${orderItems.length > 0 ? 'bg-primary text-primary-foreground shadow-md' : 'bg-muted'}`}>
           <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold ${orderItems.length > 0 ? 'bg-white text-primary' : 'bg-background text-muted-foreground'}`}>
             {orderItems.length > 0 ? <Check className="h-5 w-5" /> : '3'}

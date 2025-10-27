@@ -12,6 +12,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
+import { Switch } from '@/components/ui/switch'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import {
   Dialog,
@@ -30,13 +31,15 @@ import {
   Save,
   X,
   FileText,
-  AlertCircle
+  AlertCircle,
+  Check
 } from 'lucide-react'
 
 interface ProductPrice {
   id: string
   product_id: string
   price: number
+  is_active?: boolean
   product?: Product
 }
 
@@ -49,8 +52,9 @@ export default function AdminPreciosPage() {
   const [prices, setPrices] = useState<ProductPrice[]>([])
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
-  const [listForm, setListForm] = useState({ name: '', description: '' })
+  const [listForm, setListForm] = useState({ name: '', description: '', color: '#b85c2f' })
   const [pendingChanges, setPendingChanges] = useState<{ [productId: string]: string }>({})
+  const [pendingActiveChanges, setPendingActiveChanges] = useState<{ [productId: string]: boolean }>({})
   const [hasChanges, setHasChanges] = useState(false)
   const [saving, setSaving] = useState(false)
 
@@ -139,7 +143,7 @@ export default function AdminPreciosPage() {
     } else {
       toast.success('Lista creada')
       setShowModal(false)
-      setListForm({ name: '', description: '' })
+      setListForm({ name: '', description: '', color: '#b85c2f' })
       loadData()
     }
   }
@@ -151,10 +155,12 @@ export default function AdminPreciosPage() {
       .eq('id', id)
 
     if (error) {
-      toast.error('Error al eliminar lista')
+      toast.error('Error al eliminar lista de precios')
     } else {
       toast.success('Lista eliminada')
-      setSelectedList(null)
+      if (selectedList?.id === id) {
+        setSelectedList(null)
+      }
       loadData()
     }
   }
@@ -163,7 +169,7 @@ export default function AdminPreciosPage() {
     toast.custom((t) => (
       <div className="bg-card border rounded-lg p-4 shadow-lg">
         <p className="font-medium mb-2">¿Eliminar {list.name}?</p>
-        <p className="text-sm text-muted-foreground mb-4">Se eliminarán todos los precios de esta lista</p>
+        <p className="text-sm text-muted-foreground mb-4">Esta acción no se puede deshacer</p>
         <div className="flex gap-2">
           <Button variant="destructive" size="sm" onClick={() => {
             handleDeleteList(list.id)
@@ -184,8 +190,21 @@ export default function AdminPreciosPage() {
     setHasChanges(true)
   }
 
+  const handleProductActiveToggle = (productId: string, isActive: boolean) => {
+    setPendingActiveChanges({ ...pendingActiveChanges, [productId]: isActive })
+    setHasChanges(true)
+  }
+
+  const getProductActive = (productId: string) => {
+    if (pendingActiveChanges[productId] !== undefined) {
+      return pendingActiveChanges[productId]
+    }
+    const price = prices.find((p) => p.product_id === productId)
+    return price?.is_active ?? true
+  }
+
   const saveAllChanges = async () => {
-    if (!selectedList || Object.keys(pendingChanges).length === 0) return
+    if (!selectedList || (Object.keys(pendingChanges).length === 0 && Object.keys(pendingActiveChanges).length === 0)) return
 
     setSaving(true)
 
@@ -193,6 +212,7 @@ export default function AdminPreciosPage() {
       const updates = []
       const inserts = []
 
+      // Procesar cambios de precio
       for (const [productId, priceStr] of Object.entries(pendingChanges)) {
         const price = parseFloat(priceStr)
         if (isNaN(price) || price < 0) continue
@@ -200,10 +220,16 @@ export default function AdminPreciosPage() {
         const existing = prices.find((p) => p.product_id === productId)
 
         if (existing) {
+          const updateData: any = { price }
+          // Si también hay cambio de is_active para este producto, incluirlo
+          if (pendingActiveChanges[productId] !== undefined) {
+            updateData.is_active = pendingActiveChanges[productId]
+          }
+
           updates.push(
             supabase
               .from('product_prices')
-              .update({ price })
+              .update(updateData)
               .eq('id', existing.id)
           )
         } else {
@@ -211,7 +237,23 @@ export default function AdminPreciosPage() {
             product_id: productId,
             price_list_id: selectedList.id,
             price,
+            is_active: pendingActiveChanges[productId] ?? true,
           })
+        }
+      }
+
+      // Procesar cambios de is_active que no tengan cambio de precio
+      for (const [productId, isActive] of Object.entries(pendingActiveChanges)) {
+        if (pendingChanges[productId] !== undefined) continue // Ya procesado arriba
+
+        const existing = prices.find((p) => p.product_id === productId)
+        if (existing) {
+          updates.push(
+            supabase
+              .from('product_prices')
+              .update({ is_active: isActive })
+              .eq('id', existing.id)
+          )
         }
       }
 
@@ -229,13 +271,14 @@ export default function AdminPreciosPage() {
         if (insertError) throw insertError
       }
 
-      toast.success('Precios guardados correctamente')
+      toast.success('Cambios guardados correctamente')
       setPendingChanges({})
+      setPendingActiveChanges({})
       setHasChanges(false)
       loadPrices(selectedList.id)
     } catch (error) {
-      console.error('Error saving prices:', error)
-      toast.error('Error al guardar precios')
+      console.error('Error saving changes:', error)
+      toast.error('Error al guardar cambios')
     } finally {
       setSaving(false)
     }
@@ -332,13 +375,19 @@ export default function AdminPreciosPage() {
                   onClick={() => setSelectedList(list)}
                 >
                   <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="font-medium">{list.name}</div>
-                      {list.description && (
-                        <div className="text-xs text-muted-foreground mt-1 line-clamp-2">
-                          {list.description}
-                        </div>
-                      )}
+                    <div className="flex items-center gap-2 flex-1">
+                      <div
+                        className="h-4 w-4 rounded-full border-2 border-white shadow-sm flex-shrink-0"
+                        style={{ backgroundColor: list.color || '#b85c2f' }}
+                      />
+                      <div className="flex-1">
+                        <div className="font-medium">{list.name}</div>
+                        {list.description && (
+                          <div className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                            {list.description}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                   <Button
@@ -398,6 +447,7 @@ export default function AdminPreciosPage() {
                           <TableHead>Categoría</TableHead>
                           <TableHead>Unidad</TableHead>
                           <TableHead className="text-right">Precio ($)</TableHead>
+                          <TableHead className="text-center">Activo</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -428,6 +478,14 @@ export default function AdminPreciosPage() {
                                 className="max-w-[140px] ml-auto text-right"
                                 placeholder="0.00"
                               />
+                            </TableCell>
+                            <TableCell className="text-center">
+                              <div className="flex justify-center">
+                                <Switch
+                                  checked={getProductActive(product.id)}
+                                  onCheckedChange={(checked) => handleProductActiveToggle(product.id, checked)}
+                                />
+                              </div>
                             </TableCell>
                           </TableRow>
                         ))}
@@ -488,13 +546,29 @@ export default function AdminPreciosPage() {
               />
             </div>
 
+            <div className="space-y-2">
+              <Label htmlFor="color">Color de la Lista</Label>
+              <div className="flex gap-3 items-center">
+                <Input
+                  id="color"
+                  type="color"
+                  value={listForm.color}
+                  onChange={(e) => setListForm({ ...listForm, color: e.target.value })}
+                  className="w-20 h-10 cursor-pointer"
+                />
+                <span className="text-sm text-muted-foreground">
+                  Color para identificar visualmente la lista
+                </span>
+              </div>
+            </div>
+
             <DialogFooter>
               <Button
                 type="button"
                 variant="outline"
                 onClick={() => {
                   setShowModal(false)
-                  setListForm({ name: '', description: '' })
+                  setListForm({ name: '', description: '', color: '#b85c2f' })
                 }}
               >
                 Cancelar

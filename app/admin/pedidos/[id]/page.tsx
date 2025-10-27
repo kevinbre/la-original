@@ -13,6 +13,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
+import { OrderStatusBadge } from '@/components/OrderStatusBadge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -29,6 +30,7 @@ import {
   ArrowLeft,
   Download,
   Save,
+  Link2,
   X,
   User,
   Phone,
@@ -368,6 +370,38 @@ export default function AdminPedidoDetallePage() {
     }
   }
 
+  const handleCopyURL = () => {
+    if (order) {
+      const url = `${window.location.origin}/pedido/${order.order_number}${order.guest_token ? `?token=${order.guest_token}` : ''}`
+      navigator.clipboard.writeText(url)
+      toast.success('URL copiada al portapapeles')
+    }
+  }
+
+  const handleRegenerateToken = async () => {
+    if (!order) return
+
+    try {
+      const { data: newToken, error: tokenError } = await supabase
+        .rpc('generate_guest_token')
+
+      if (tokenError) throw tokenError
+
+      const { error: updateError } = await supabase
+        .from('orders')
+        .update({ guest_token: newToken })
+        .eq('id', order.id)
+
+      if (updateError) throw updateError
+
+      toast.success('Token regenerado exitosamente')
+      loadOrder()
+    } catch (error) {
+      console.error('Error regenerating token:', error)
+      toast.error('Error al regenerar el token')
+    }
+  }
+
   if (loading) {
     return (
       <div className="container mx-auto px-4 py-12">
@@ -437,13 +471,14 @@ export default function AdminPedidoDetallePage() {
             </p>
           </div>
 
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-col sm:flex-row flex-wrap gap-2">
             {hasChanges && (
               <>
                 <Button
                   variant="outline"
                   onClick={cancelChanges}
                   disabled={saving}
+                  className="w-full sm:w-auto"
                 >
                   <X className="mr-2 h-4 w-4" />
                   Cancelar
@@ -451,6 +486,7 @@ export default function AdminPedidoDetallePage() {
                 <Button
                   onClick={saveAllPrices}
                   disabled={saving}
+                  className="w-full sm:w-auto"
                 >
                   <Save className="mr-2 h-4 w-4" />
                   {saving ? 'Guardando...' : 'Guardar Precios'}
@@ -458,10 +494,20 @@ export default function AdminPedidoDetallePage() {
               </>
             )}
             {allItemsHavePrices && !hasChanges && (
-              <Button variant="outline" onClick={handleDownloadPDF}>
-                <Download className="mr-2 h-4 w-4" />
-                Descargar PDF
-              </Button>
+              <>
+                <Button variant="outline" onClick={handleCopyURL} className="w-full sm:w-auto">
+                  <Link2 className="mr-2 h-4 w-4" />
+                  Copiar URL
+                </Button>
+                <Button variant="outline" onClick={handleRegenerateToken} className="w-full sm:w-auto">
+                  <RotateCcw className="mr-2 h-4 w-4" />
+                  Regenerar Token
+                </Button>
+                <Button variant="outline" onClick={handleDownloadPDF} className="w-full sm:w-auto">
+                  <Download className="mr-2 h-4 w-4" />
+                  Descargar PDF
+                </Button>
+              </>
             )}
           </div>
         </div>
@@ -470,14 +516,18 @@ export default function AdminPedidoDetallePage() {
       {/* Status Stepper */}
       <Card className="mb-6">
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle>Estado del Pedido</CardTitle>
-            <div className="flex gap-2">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-3">
+              <CardTitle>Estado del Pedido</CardTitle>
+              <OrderStatusBadge status={order.status} />
+            </div>
+            <div className="flex flex-col sm:flex-row gap-2">
               {order.status !== 'rechazado' && order.status !== 'cancelado' && (
                 <Button
                   variant="destructive"
                   size="sm"
                   onClick={() => setShowRejectDialog(true)}
+                  className="w-full sm:w-auto"
                 >
                   <XCircle className="mr-2 h-4 w-4" />
                   Rechazar
@@ -487,6 +537,7 @@ export default function AdminPedidoDetallePage() {
                 <Button
                   size="sm"
                   onClick={advanceToNextStep}
+                  className="w-full sm:w-auto"
                 >
                   Siguiente: {nextStatusLabel}
                   <ChevronRight className="ml-2 h-4 w-4" />
@@ -495,8 +546,10 @@ export default function AdminPedidoDetallePage() {
             </div>
           </div>
         </CardHeader>
-        <CardContent className="pt-6">
-          <HorizontalStatusStepper currentStatus={order.status} />
+        <CardContent className="pt-6 overflow-x-auto">
+          <div className="min-w-[600px]">
+            <HorizontalStatusStepper currentStatus={order.status} />
+          </div>
         </CardContent>
       </Card>
 

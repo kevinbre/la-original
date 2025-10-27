@@ -33,6 +33,7 @@ export interface PriceList {
   id: string
   name: string
   description?: string
+  color?: string
   is_active: boolean
   created_at: string
   updated_at: string
@@ -125,11 +126,11 @@ export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
 }
 
 export const ORDER_STATUS_COLORS: Record<OrderStatus, string> = {
-  pendiente: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
-  confirmado: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
-  en_preparacion: 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200',
-  preparado: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
-  entregado: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200',
+  pendiente: 'bg-yellow-500 text-white dark:bg-yellow-600 dark:text-white',
+  confirmado: 'bg-green-700 text-white dark:bg-green-800 dark:text-white',
+  en_preparacion: 'bg-orange-600 text-white dark:bg-orange-700 dark:text-white',
+  preparado: 'bg-blue-600 text-white dark:bg-blue-700 dark:text-white',
+  entregado: 'bg-gray-600 text-white dark:bg-gray-700 dark:text-white',
 }
 
 export interface AdminNotification {

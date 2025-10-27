@@ -27,12 +27,13 @@ import {
   Package,
   Plus,
   Pencil,
-  Trash2,
   Loader2,
   ArrowLeft,
   Image as ImageIcon,
   Power,
-  PowerOff
+  PowerOff,
+  Search,
+  Trash2
 } from 'lucide-react'
 
 export default function AdminProductosPage() {
@@ -42,6 +43,9 @@ export default function AdminProductosPage() {
   const [loading, setLoading] = useState(true)
   const [editingProduct, setEditingProduct] = useState<Product | null>(null)
   const [showModal, setShowModal] = useState(false)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [currentPage, setCurrentPage] = useState(1)
+  const itemsPerPage = 10
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -155,7 +159,7 @@ export default function AdminProductosPage() {
     toast.custom((t) => (
       <div className="bg-card border rounded-lg p-4 shadow-lg">
         <p className="font-medium mb-2">¿Eliminar {product.name}?</p>
-        <p className="text-sm text-muted-foreground mb-4">Esta acción no se puede deshacer</p>
+        <p className="text-sm text-muted-foreground mb-4">Esta acción eliminará el producto completamente</p>
         <div className="flex gap-2">
           <Button variant="destructive" size="sm" onClick={() => {
             handleDelete(product.id)
@@ -197,6 +201,19 @@ export default function AdminProductosPage() {
     })
   }
 
+  // Filtrado y paginación
+  const filteredProducts = products.filter((product) =>
+    product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    product.category?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    product.description?.toLowerCase().includes(searchTerm.toLowerCase())
+  )
+
+  const totalPages = Math.ceil(filteredProducts.length / itemsPerPage)
+  const paginatedProducts = filteredProducts.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  )
+
   if (loading) {
     return (
       <div className="container mx-auto px-4 py-12">
@@ -232,10 +249,26 @@ export default function AdminProductosPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Productos</CardTitle>
-          <CardDescription>
-            {products.length} producto{products.length !== 1 ? 's' : ''} en total
-          </CardDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Productos</CardTitle>
+              <CardDescription>
+                {filteredProducts.length} de {products.length} producto{products.length !== 1 ? 's' : ''}
+              </CardDescription>
+            </div>
+            <div className="relative w-64">
+              <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Buscar productos..."
+                value={searchTerm}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value)
+                  setCurrentPage(1)
+                }}
+                className="pl-9"
+              />
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
           {products.length === 0 ? (
@@ -260,7 +293,7 @@ export default function AdminProductosPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {products.map((product) => (
+                  {paginatedProducts.map((product) => (
                     <TableRow key={product.id}>
                       <TableCell>
                         <div className="flex items-center gap-3">
@@ -340,6 +373,30 @@ export default function AdminProductosPage() {
                   ))}
                 </TableBody>
               </Table>
+            </div>
+          )}
+
+          {totalPages > 1 && (
+            <div className="flex justify-center gap-2 mt-4 pt-4 border-t">
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage(p => p - 1)}
+              >
+                Anterior
+              </Button>
+              <span className="flex items-center px-4 text-sm text-muted-foreground">
+                Página {currentPage} de {totalPages}
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={currentPage === totalPages}
+                onClick={() => setCurrentPage(p => p + 1)}
+              >
+                Siguiente
+              </Button>
             </div>
           )}
         </CardContent>

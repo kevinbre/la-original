@@ -4,6 +4,7 @@ import './globals.css'
 import Header from '@/components/Header'
 import { Toaster } from 'sonner'
 import { ThemeProvider } from '@/components/theme-provider'
+import { FloatingWhatsAppButton } from '@/components/FloatingWhatsAppButton'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -57,7 +58,12 @@ export default function RootLayout({
           <main className="min-h-screen">
             {children}
           </main>
-          <Toaster richColors position="top-right" />
+          <Toaster richColors position="top-right" toastOptions={{
+            classNames: {
+              toast: 'mt-20',
+            },
+          }} />
+          <FloatingWhatsAppButton />
 
           <footer className="relative bg-gradient-to-br from-[#9d4c1f] via-[#c96434] to-[#9d4c1f] dark:from-[#7a3a18] dark:via-[#9d4c1f] dark:to-[#7a3a18] text-white mt-12">
             {/* Decorative wave at top */}

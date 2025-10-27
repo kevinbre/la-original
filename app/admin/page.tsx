@@ -9,6 +9,8 @@ import { toast } from 'sonner'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { OrderStatusBadge } from '@/components/OrderStatusBadge'
+import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import {
@@ -22,7 +24,8 @@ import {
   DollarSign,
   LayoutDashboard,
   Users,
-  ShoppingCart
+  ShoppingCart,
+  Search
 } from 'lucide-react'
 
 export default function AdminPage() {
@@ -31,6 +34,9 @@ export default function AdminPage() {
   const [orders, setOrders] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [statusFilter, setStatusFilter] = useState<string>('all')
+  const [searchTerm, setSearchTerm] = useState('')
+  const [currentPage, setCurrentPage] = useState(1)
+  const itemsPerPage = 10
 
   useEffect(() => {
     checkAdmin()
@@ -88,9 +94,19 @@ export default function AdminPage() {
     setLoading(false)
   }
 
-  const filteredOrders = statusFilter === 'all'
-    ? orders
-    : orders.filter((order) => order.status === statusFilter)
+  const filteredOrders = orders
+    .filter((order) => statusFilter === 'all' || order.status === statusFilter)
+    .filter((order) =>
+      order.order_number?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      order.customer_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      order.customer_phone?.includes(searchTerm)
+    )
+
+  const totalPages = Math.ceil(filteredOrders.length / itemsPerPage)
+  const paginatedOrders = filteredOrders.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  )
 
   const stats = [
     {
@@ -195,27 +211,42 @@ export default function AdminPage() {
       {/* Orders Section */}
       <Card>
         <CardHeader>
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div>
-              <CardTitle>Pedidos</CardTitle>
-              <CardDescription>
-                Listado completo de todos los pedidos
-              </CardDescription>
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div>
+                <CardTitle>Pedidos</CardTitle>
+                <CardDescription>
+                  Listado completo de todos los pedidos
+                </CardDescription>
+              </div>
+              <div className="w-full sm:w-[200px]">
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Filtrar por estado" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos los estados</SelectItem>
+                    {Object.entries(ORDER_STATUS_LABELS).map(([key, label]) => (
+                      <SelectItem key={key} value={key}>
+                        {label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
-            <div className="w-full sm:w-[200px]">
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Filtrar por estado" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos los estados</SelectItem>
-                  {Object.entries(ORDER_STATUS_LABELS).map(([key, label]) => (
-                    <SelectItem key={key} value={key}>
-                      {label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            {/* Search Bar */}
+            <div className="relative">
+              <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Buscar por pedido, cliente o teléfono..."
+                value={searchTerm}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value)
+                  setCurrentPage(1)
+                }}
+                className="pl-9"
+              />
             </div>
           </div>
         </CardHeader>
@@ -239,7 +270,7 @@ export default function AdminPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredOrders.map((order) => (
+                  {paginatedOrders.map((order) => (
                     <TableRow key={order.id}>
                       <TableCell className="font-medium">
                         <Link
@@ -258,13 +289,7 @@ export default function AdminPage() {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Badge variant={
-                          order.status === 'completado' ? 'default' :
-                          order.status === 'cancelado' || order.status === 'rechazado' ? 'destructive' :
-                          'secondary'
-                        }>
-                          {ORDER_STATUS_LABELS[order.status as keyof typeof ORDER_STATUS_LABELS]}
-                        </Badge>
+                        <OrderStatusBadge status={order.status} />
                       </TableCell>
                       <TableCell className="text-center">
                         {order.order_items?.length || 0}
@@ -288,6 +313,31 @@ export default function AdminPage() {
                   ))}
                 </TableBody>
               </Table>
+
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="flex justify-center gap-2 mt-4 pt-4 border-t">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={currentPage === 1}
+                    onClick={() => setCurrentPage(p => p - 1)}
+                  >
+                    Anterior
+                  </Button>
+                  <span className="flex items-center px-4 text-sm">
+                    Página {currentPage} de {totalPages}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={currentPage === totalPages}
+                    onClick={() => setCurrentPage(p => p + 1)}
+                  >
+                    Siguiente
+                  </Button>
+                </div>
+              )}
             </div>
           )}
         </CardContent>

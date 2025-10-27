@@ -12,7 +12,7 @@ import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { Plus, Search, Edit, Trash2, User, Phone, Mail, MapPin, Loader2 } from 'lucide-react'
+import { Plus, Search, Edit, User, Phone, Mail, MapPin, Loader2, Power, PowerOff, MessageCircle } from 'lucide-react'
 
 interface Customer {
   id: string
@@ -32,6 +32,8 @@ export default function ClientesPage() {
   const [filteredCustomers, setFilteredCustomers] = useState<Customer[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
+  const [currentPage, setCurrentPage] = useState(1)
+  const itemsPerPage = 10
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null)
   const [saving, setSaving] = useState(false)
@@ -57,6 +59,7 @@ export default function ClientesPage() {
       (customer.email?.toLowerCase().includes(searchTerm.toLowerCase()))
     )
     setFilteredCustomers(filtered)
+    setCurrentPage(1)
   }, [searchTerm, customers])
 
   const checkAdmin = async () => {
@@ -188,6 +191,13 @@ export default function ClientesPage() {
     }
   }
 
+  // Paginación
+  const totalPages = Math.ceil(filteredCustomers.length / itemsPerPage)
+  const paginatedCustomers = filteredCustomers.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  )
+
   if (loading) {
     return (
       <div className="container mx-auto px-4 py-8 flex items-center justify-center min-h-[50vh]">
@@ -252,10 +262,20 @@ export default function ClientesPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredCustomers.map((customer) => (
+                {paginatedCustomers.map((customer) => (
                   <TableRow key={customer.id}>
                     <TableCell className="font-medium">{customer.name}</TableCell>
-                    <TableCell>{customer.phone}</TableCell>
+                    <TableCell>
+                      <a
+                        href={`https://wa.me/${customer.phone.replace(/\D/g, '')}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2 text-green-600 hover:text-green-700 hover:underline w-fit"
+                      >
+                        <MessageCircle className="h-4 w-4" />
+                        {customer.phone}
+                      </a>
+                    </TableCell>
                     <TableCell className="hidden md:table-cell">
                       {customer.email || '-'}
                     </TableCell>
@@ -280,14 +300,19 @@ export default function ClientesPage() {
                           variant="ghost"
                           size="sm"
                           onClick={() => handleToggleActive(customer)}
+                          title={customer.is_active ? 'Desactivar' : 'Activar'}
                         >
-                          <Trash2 className="h-4 w-4" />
+                          {customer.is_active ? (
+                            <PowerOff className="h-4 w-4 text-orange-600" />
+                          ) : (
+                            <Power className="h-4 w-4 text-green-600" />
+                          )}
                         </Button>
                       </div>
                     </TableCell>
                   </TableRow>
                 ))}
-                {filteredCustomers.length === 0 && (
+                {paginatedCustomers.length === 0 && (
                   <TableRow>
                     <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                       No se encontraron clientes
@@ -298,6 +323,32 @@ export default function ClientesPage() {
             </Table>
           </div>
         </CardContent>
+
+        {totalPages > 1 && (
+          <CardContent className="pt-0">
+            <div className="flex justify-center gap-2 pt-4 border-t">
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage(p => p - 1)}
+              >
+                Anterior
+              </Button>
+              <span className="flex items-center px-4 text-sm text-muted-foreground">
+                Página {currentPage} de {totalPages}
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={currentPage === totalPages}
+                onClick={() => setCurrentPage(p => p + 1)}
+              >
+                Siguiente
+              </Button>
+            </div>
+          </CardContent>
+        )}
       </Card>
 
       {/* Dialog */}

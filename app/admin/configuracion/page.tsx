@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
+import { Switch } from '@/components/ui/switch'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { toast } from 'sonner'
 import { Building2, Save, Upload } from 'lucide-react'
@@ -23,6 +24,8 @@ interface CompanySettings {
   website: string | null
   tax_id: string | null
   logo_url: string | null
+  whatsapp_number: string | null
+  show_whatsapp_button: boolean
 }
 
 export default function ConfiguracionPage() {
@@ -87,6 +90,8 @@ export default function ConfiguracionPage() {
           website: settings.website,
           tax_id: settings.tax_id,
           logo_url: settings.logo_url,
+          whatsapp_number: settings.whatsapp_number,
+          show_whatsapp_button: settings.show_whatsapp_button,
           updated_at: new Date().toISOString()
         })
         .eq('id', settings.id)
@@ -288,6 +293,44 @@ export default function ConfiguracionPage() {
                   />
                 </div>
               )}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* WhatsApp Configuration */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Configuración de WhatsApp</CardTitle>
+            <CardDescription>
+              Configurá el botón flotante de WhatsApp que aparecerá en todas las páginas
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <Label htmlFor="whatsapp_number">Número de WhatsApp</Label>
+              <Input
+                id="whatsapp_number"
+                type="tel"
+                value={settings.whatsapp_number || ''}
+                onChange={(e) => setSettings({ ...settings, whatsapp_number: e.target.value })}
+                placeholder="+54 9 11 1234-5678"
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Incluí el código de país. Ej: +54 9 11 1234-5678
+              </p>
+            </div>
+            <div className="flex items-center justify-between space-x-2 rounded-lg border p-4">
+              <div className="space-y-0.5">
+                <Label htmlFor="show_whatsapp">Mostrar botón flotante de WhatsApp</Label>
+                <p className="text-xs text-muted-foreground">
+                  El botón aparecerá en la esquina inferior derecha de todas las páginas
+                </p>
+              </div>
+              <Switch
+                id="show_whatsapp"
+                checked={settings.show_whatsapp_button ?? true}
+                onCheckedChange={(checked) => setSettings({...settings, show_whatsapp_button: checked})}
+              />
             </div>
           </CardContent>
         </Card>
