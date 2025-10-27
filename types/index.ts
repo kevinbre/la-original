@@ -131,12 +131,12 @@ export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
 
 export const ORDER_STATUS_COLORS: Record<OrderStatus, string> = {
   pendiente: 'bg-yellow-500 text-white dark:bg-yellow-600 dark:text-white',
-  confirmado: 'bg-green-700 text-white dark:bg-green-800 dark:text-white',
-  en_preparacion: 'bg-orange-600 text-white dark:bg-orange-700 dark:text-white',
-  preparado: 'bg-blue-600 text-white dark:bg-blue-700 dark:text-white',
-  entregado: 'bg-gray-600 text-white dark:bg-gray-700 dark:text-white',
-  rechazado: 'bg-red-700 text-white dark:bg-red-800 dark:text-white',
-  cancelado: 'bg-gray-700 text-white dark:bg-gray-800 dark:text-white',
+  confirmado: 'bg-emerald-500 text-white dark:bg-emerald-600 dark:text-white',
+  en_preparacion: 'bg-blue-500 text-white dark:bg-blue-600 dark:text-white',
+  preparado: 'bg-green-600 text-white dark:bg-green-700 dark:text-white',
+  entregado: 'bg-green-700 text-white dark:bg-green-800 dark:text-white',
+  rechazado: 'bg-red-600 text-white dark:bg-red-700 dark:text-white',
+  cancelado: 'bg-gray-600 text-white dark:bg-gray-700 dark:text-white',
 }
 
 export interface AdminNotification {

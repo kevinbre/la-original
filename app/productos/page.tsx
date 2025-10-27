@@ -136,7 +136,7 @@ export default function ProductosPage() {
   )
 
   return (
-    <div className="container mx-auto px-4 py-6 lg:py-12">
+    <div className="container mx-auto px-4 py-6 lg:py-12 overflow-x-hidden">
       {/* Header */}
       <div className="mb-6">
         <h1 className="mb-2 text-2xl font-bold tracking-tight lg:text-3xl">
@@ -147,9 +147,9 @@ export default function ProductosPage() {
         </p>
       </div>
 
-      <div className="flex gap-6">
+      <div className="flex flex-col lg:flex-row gap-6">
         {/* Sidebar - Desktop */}
-        <aside className="hidden w-64 flex-shrink-0 lg:block">
+        <aside className="hidden w-full lg:w-64 flex-shrink-0 lg:block">
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-base">
@@ -164,7 +164,7 @@ export default function ProductosPage() {
         </aside>
 
         {/* Main Content */}
-        <div className="flex-1">
+        <div className="flex-1 min-w-0">
           {/* Mobile Filter Button */}
           <div className="mb-4 flex items-center justify-between lg:hidden">
             <p className="text-sm text-muted-foreground">

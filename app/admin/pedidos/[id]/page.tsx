@@ -445,7 +445,7 @@ export default function AdminPedidoDetallePage() {
   const nextStatusLabel = nextStatus ? ORDER_STATUS_LABELS[nextStatus as keyof typeof ORDER_STATUS_LABELS] : null
 
   return (
-    <div className="container mx-auto px-4 py-6 lg:py-12">
+    <div className="container mx-auto px-4 py-6 lg:py-12 overflow-x-hidden">
       {/* Header */}
       <div className="mb-6">
         <Link href="/admin">
@@ -553,9 +553,9 @@ export default function AdminPedidoDetallePage() {
         </CardContent>
       </Card>
 
-      <div className="grid gap-6 lg:grid-cols-3">
+      <div className="grid gap-6 grid-cols-1 lg:grid-cols-3">
         {/* Left Column - Customer Info & Controls */}
-        <div className="space-y-6 lg:col-span-1">
+        <div className="space-y-6 w-full lg:col-span-1">
           {/* Customer Info */}
           <Card>
             <CardHeader>
@@ -587,8 +587,8 @@ export default function AdminPedidoDetallePage() {
               )}
               <div className="space-y-2">
                 <Label className="text-xs text-muted-foreground">Código de Pedido</Label>
-                <div className="flex items-center gap-2">
-                  <code className="flex-1 rounded bg-muted px-2 py-1 text-xs font-mono">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                  <code className="flex-1 rounded bg-muted px-2 py-1 text-xs font-mono break-all">
                     {order.order_number}
                   </code>
                   <Button
@@ -598,6 +598,7 @@ export default function AdminPedidoDetallePage() {
                       navigator.clipboard.writeText(order.order_number)
                       toast.success('Código copiado')
                     }}
+                    className="w-full sm:w-auto"
                   >
                     Copiar
                   </Button>
@@ -605,8 +606,8 @@ export default function AdminPedidoDetallePage() {
               </div>
               <div className="space-y-2">
                 <Label className="text-xs text-muted-foreground">Token de Acceso</Label>
-                <div className="flex items-center gap-2">
-                  <code className="flex-1 rounded bg-muted px-2 py-1 text-xs font-mono">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                  <code className="flex-1 rounded bg-muted px-2 py-1 text-xs font-mono break-all">
                     {order.guest_token}
                   </code>
                   <Button
@@ -616,6 +617,7 @@ export default function AdminPedidoDetallePage() {
                       navigator.clipboard.writeText(order?.guest_token ?? "")
                       toast.success('Token copiado')
                     }}
+                    className="w-full sm:w-auto"
                   >
                     Copiar
                   </Button>
@@ -744,7 +746,7 @@ export default function AdminPedidoDetallePage() {
         </div>
 
         {/* Right Column - Order Items & Notes */}
-        <div className="space-y-6 lg:col-span-2">
+        <div className="space-y-6 w-full lg:col-span-2">
           {/* Items Table */}
           <Card>
             <CardHeader>
@@ -754,7 +756,7 @@ export default function AdminPedidoDetallePage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="rounded-md border">
+              <div className="rounded-md border overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow>

@@ -25,7 +25,9 @@ import {
   LayoutDashboard,
   Users,
   ShoppingCart,
-  Search
+  Search,
+  MessageCircle,
+  Building2
 } from 'lucide-react'
 
 export default function AdminPage() {
@@ -184,6 +186,22 @@ export default function AdminPage() {
           <Button variant="outline" className="w-full">
             <DollarSign className="mr-2 h-4 w-4" />
             Listas de Precios
+          </Button>
+        </Link>
+      </div>
+
+      {/* Configuration Buttons */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-8">
+        <Link href="/admin/whatsapp" className="w-full">
+          <Button variant="outline" className="w-full border-green-200 hover:bg-green-50 dark:border-green-900 dark:hover:bg-green-950">
+            <MessageCircle className="mr-2 h-4 w-4 text-green-600" />
+            Configurar WhatsApp
+          </Button>
+        </Link>
+        <Link href="/admin/configuracion" className="w-full">
+          <Button variant="outline" className="w-full">
+            <Building2 className="mr-2 h-4 w-4" />
+            Configuración Empresa
           </Button>
         </Link>
       </div>
