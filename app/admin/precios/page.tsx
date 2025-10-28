@@ -502,6 +502,11 @@ export default function AdminPreciosPage() {
                             </Button>
                           </TableHead>
                           <TableHead>
+                            <Button variant="ghost" size="sm" onClick={() => handleSort('description')} className="h-8 px-2">
+                              Descripción {getSortIcon('description')}
+                            </Button>
+                          </TableHead>
+                          <TableHead>
                             <Button variant="ghost" size="sm" onClick={() => handleSort('category')} className="h-8 px-2">
                               Categoría {getSortIcon('category')}
                             </Button>
@@ -520,6 +525,13 @@ export default function AdminPreciosPage() {
                           <TableRow key={product.id}>
                             <TableCell className="font-medium">
                               {product.name}
+                            </TableCell>
+                            <TableCell className="text-sm text-muted-foreground max-w-xs">
+                              {product.description ? (
+                                <span className="line-clamp-2">{product.description}</span>
+                              ) : (
+                                <span className="text-muted-foreground">-</span>
+                              )}
                             </TableCell>
                             <TableCell>
                               {product.category ? (
