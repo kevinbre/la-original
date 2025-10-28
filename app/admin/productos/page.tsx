@@ -33,7 +33,10 @@ import {
   Power,
   PowerOff,
   Search,
-  Trash2
+  Trash2,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown
 } from 'lucide-react'
 
 export default function AdminProductosPage() {
@@ -46,12 +49,16 @@ export default function AdminProductosPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 10
+  const [sortField, setSortField] = useState<keyof Product>('created_at')
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc')
   const [formData, setFormData] = useState({
     name: '',
     description: '',
     category: '',
     image_url: '',
     unit: 'unidad',
+    units_per_pack: '',
+    origin: '',
   })
 
   useEffect(() => {
@@ -101,10 +108,15 @@ export default function AdminProductosPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
+    const dataToSave = {
+      ...formData,
+      units_per_pack: formData.units_per_pack ? parseInt(formData.units_per_pack) : null,
+    }
+
     if (editingProduct) {
       const { error } = await supabase
         .from('products')
-        .update(formData)
+        .update(dataToSave)
         .eq('id', editingProduct.id)
 
       if (error) {
@@ -117,7 +129,7 @@ export default function AdminProductosPage() {
     } else {
       const { error } = await supabase
         .from('products')
-        .insert([{ ...formData, is_active: true }])
+        .insert([{ ...dataToSave, is_active: true }])
 
       if (error) {
         toast.error('Error al crear producto')
@@ -137,6 +149,8 @@ export default function AdminProductosPage() {
       category: product.category || '',
       image_url: product.image_url || '',
       unit: product.unit || 'unidad',
+      units_per_pack: product.units_per_pack?.toString() || '',
+      origin: product.origin || '',
     })
     setShowModal(true)
   }
@@ -198,18 +212,51 @@ export default function AdminProductosPage() {
       category: '',
       image_url: '',
       unit: 'unidad',
+      units_per_pack: '',
+      origin: '',
     })
   }
 
-  // Filtrado y paginación
-  const filteredProducts = products.filter((product) =>
-    product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    product.category?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    product.description?.toLowerCase().includes(searchTerm.toLowerCase())
-  )
+  const handleSort = (field: keyof Product) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc')
+    } else {
+      setSortField(field)
+      setSortDirection('asc')
+    }
+  }
 
-  const totalPages = Math.ceil(filteredProducts.length / itemsPerPage)
-  const paginatedProducts = filteredProducts.slice(
+  const getSortIcon = (field: keyof Product) => {
+    if (sortField !== field) {
+      return <ArrowUpDown className="h-4 w-4" />
+    }
+    return sortDirection === 'asc'
+      ? <ArrowUp className="h-4 w-4" />
+      : <ArrowDown className="h-4 w-4" />
+  }
+
+  // Filtrado, ordenamiento y paginación
+  const filteredAndSortedProducts = products
+    .filter((product) =>
+      product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      product.category?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      product.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      product.origin?.toLowerCase().includes(searchTerm.toLowerCase())
+    )
+    .sort((a, b) => {
+      const aValue = a[sortField]
+      const bValue = b[sortField]
+
+      if (aValue == null) return 1
+      if (bValue == null) return -1
+
+      if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1
+      if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1
+      return 0
+    })
+
+  const totalPages = Math.ceil(filteredAndSortedProducts.length / itemsPerPage)
+  const paginatedProducts = filteredAndSortedProducts.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   )
@@ -253,7 +300,7 @@ export default function AdminProductosPage() {
             <div>
               <CardTitle>Productos</CardTitle>
               <CardDescription>
-                {filteredProducts.length} de {products.length} producto{products.length !== 1 ? 's' : ''}
+                {filteredAndSortedProducts.length} de {products.length} producto{products.length !== 1 ? 's' : ''}
               </CardDescription>
             </div>
             <div className="relative w-64">
@@ -285,9 +332,26 @@ export default function AdminProductosPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Producto</TableHead>
-                    <TableHead>Categoría</TableHead>
-                    <TableHead>Unidad</TableHead>
+                    <TableHead>
+                      <Button variant="ghost" size="sm" onClick={() => handleSort('name')} className="h-8 px-2">
+                        Producto {getSortIcon('name')}
+                      </Button>
+                    </TableHead>
+                    <TableHead>
+                      <Button variant="ghost" size="sm" onClick={() => handleSort('category')} className="h-8 px-2">
+                        Categoría {getSortIcon('category')}
+                      </Button>
+                    </TableHead>
+                    <TableHead>
+                      <Button variant="ghost" size="sm" onClick={() => handleSort('origin')} className="h-8 px-2">
+                        Proveedor {getSortIcon('origin')}
+                      </Button>
+                    </TableHead>
+                    <TableHead>
+                      <Button variant="ghost" size="sm" onClick={() => handleSort('unit')} className="h-8 px-2">
+                        Unidad {getSortIcon('unit')}
+                      </Button>
+                    </TableHead>
                     <TableHead>Estado</TableHead>
                     <TableHead className="text-right">Acciones</TableHead>
                   </TableRow>
@@ -328,8 +392,18 @@ export default function AdminProductosPage() {
                           <span className="text-muted-foreground">-</span>
                         )}
                       </TableCell>
+                      <TableCell>
+                        {product.origin ? (
+                          <Badge variant="outline" className="capitalize">{product.origin}</Badge>
+                        ) : (
+                          <span className="text-muted-foreground">-</span>
+                        )}
+                      </TableCell>
                       <TableCell className="text-sm">
                         {product.unit}
+                        {product.units_per_pack && (
+                          <span className="text-muted-foreground"> x{product.units_per_pack}</span>
+                        )}
                       </TableCell>
                       <TableCell>
                         <Button
@@ -450,6 +524,21 @@ export default function AdminProductosPage() {
               </div>
 
               <div className="space-y-2">
+                <Label htmlFor="origin">Proveedor/Origen</Label>
+                <Input
+                  id="origin"
+                  value={formData.origin || ''}
+                  onChange={(e) => setFormData({ ...formData, origin: e.target.value })}
+                  placeholder="Ej: Carrefour, Distribuidora X, etc."
+                />
+                <p className="text-xs text-muted-foreground">
+                  Opcional. Indica de dónde comprás este producto
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
                 <Label htmlFor="unit">Unidad de Venta</Label>
                 <Select
                   value={formData.unit}
@@ -467,6 +556,21 @@ export default function AdminProductosPage() {
                   </SelectContent>
                 </Select>
               </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="units_per_pack">Cantidad por {formData.unit}</Label>
+                <Input
+                  id="units_per_pack"
+                  type="number"
+                  min="1"
+                  value={formData.units_per_pack}
+                  onChange={(e) => setFormData({ ...formData, units_per_pack: e.target.value })}
+                  placeholder="Ej: 6, 12, 24"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Opcional. Ej: Caja x6, Pack x12
+                </p>
+              </div>
             </div>
 
             <div className="space-y-2">
@@ -476,10 +580,13 @@ export default function AdminProductosPage() {
                 type="url"
                 value={formData.image_url}
                 onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
-                placeholder="https://ejemplo.com/imagen.jpg"
+                placeholder="https://carrefourar.vtexassets.com/... o cualquier URL"
               />
               <p className="text-xs text-muted-foreground">
-                URL de la imagen del producto
+                Podés usar URLs de Carrefour, Día, Coto o cualquier otra fuente
+              </p>
+              <p className="text-xs text-blue-600">
+                Ejemplo Carrefour: https://carrefourar.vtexassets.com/arquivos/ids/693199-1600-auto
               </p>
             </div>
 

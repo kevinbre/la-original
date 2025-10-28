@@ -26,6 +26,8 @@ export interface Product {
   category?: string
   image_url?: string
   unit: string
+  units_per_pack?: number
+  origin?: string
   is_active: boolean
   created_at: string
   updated_at: string
