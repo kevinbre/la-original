@@ -7,6 +7,7 @@ const nextConfig = {
       'carrefourar.vtexassets.com',
       'ardiaprod.vtexassets.com',
       'www.brancastore.com.ar',
+      'masonlineprod.vtexassets.com',
     ],
     remotePatterns: [
       { protocol: 'https', hostname: '**.supabase.co' },
