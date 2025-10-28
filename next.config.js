@@ -5,6 +5,7 @@ const nextConfig = {
       'placeholder.co',
       'jumboargentina.vtexassets.com',
       'carrefourar.vtexassets.com',
+      'ardiaprod.vtexassets.com',
     ],
     remotePatterns: [
       { protocol: 'https', hostname: '**.supabase.co' },
