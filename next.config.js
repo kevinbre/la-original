@@ -6,6 +6,7 @@ const nextConfig = {
       'jumboargentina.vtexassets.com',
       'carrefourar.vtexassets.com',
       'ardiaprod.vtexassets.com',
+      'www.brancastore.com.ar',
     ],
     remotePatterns: [
       { protocol: 'https', hostname: '**.supabase.co' },
