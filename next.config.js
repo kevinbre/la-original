@@ -8,6 +8,7 @@ const nextConfig = {
       'ardiaprod.vtexassets.com',
       'www.brancastore.com.ar',
       'masonlineprod.vtexassets.com',
+      'static.cotodigital3.com.ar',
     ],
     remotePatterns: [
       { protocol: 'https', hostname: '**.supabase.co' },
