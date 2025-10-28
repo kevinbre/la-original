@@ -9,6 +9,12 @@ const nextConfig = {
       'www.brancastore.com.ar',
       'masonlineprod.vtexassets.com',
       'static.cotodigital3.com.ar',
+      'diaonline.supermercadosdia.com.ar',
+      'diastoreprod.vtexassets.com',
+      'acdn-us.mitiendanube.com',
+      'vinodelacava.com',
+      'vinotecaligier.com',
+      'adv-almacendevinos.com.ar',
     ],
     remotePatterns: [
       { protocol: 'https', hostname: '**.supabase.co' },
