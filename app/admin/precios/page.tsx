@@ -32,7 +32,11 @@ import {
   X,
   FileText,
   AlertCircle,
-  Check
+  Check,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
+  Search
 } from 'lucide-react'
 
 interface ProductPrice {
@@ -57,6 +61,9 @@ export default function AdminPreciosPage() {
   const [pendingActiveChanges, setPendingActiveChanges] = useState<{ [productId: string]: boolean }>({})
   const [hasChanges, setHasChanges] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [sortField, setSortField] = useState<keyof Product>('name')
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc')
 
   useEffect(() => {
     checkAdmin()
@@ -297,6 +304,40 @@ export default function AdminPreciosPage() {
     return price?.price?.toString() || ''
   }
 
+  const handleSort = (field: keyof Product) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc')
+    } else {
+      setSortField(field)
+      setSortDirection('asc')
+    }
+  }
+
+  const getSortIcon = (field: keyof Product) => {
+    if (sortField !== field) {
+      return <ArrowUpDown className="h-4 w-4" />
+    }
+    return sortDirection === 'asc'
+      ? <ArrowUp className="h-4 w-4" />
+      : <ArrowDown className="h-4 w-4" />
+  }
+
+  const filteredAndSortedProducts = products
+    .filter((product) =>
+      product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      product.category?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      product.description?.toLowerCase().includes(searchTerm.toLowerCase())
+    )
+    .sort((a, b) => {
+      const aValue = a[sortField]
+      const bValue = b[sortField]
+      if (aValue == null) return 1
+      if (bValue == null) return -1
+      if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1
+      if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1
+      return 0
+    })
+
   if (loading) {
     return (
       <div className="container mx-auto px-4 py-12">
@@ -428,6 +469,18 @@ export default function AdminPreciosPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
+                <div className="mb-4">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      type="text"
+                      placeholder="Buscar productos..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
+                </div>
                 {products.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-12 text-center">
                     <AlertCircle className="h-12 w-12 text-muted-foreground mb-4" />
@@ -443,15 +496,27 @@ export default function AdminPreciosPage() {
                     <Table>
                       <TableHeader>
                         <TableRow>
-                          <TableHead>Producto</TableHead>
-                          <TableHead>Categoría</TableHead>
-                          <TableHead>Unidad</TableHead>
+                          <TableHead>
+                            <Button variant="ghost" size="sm" onClick={() => handleSort('name')} className="h-8 px-2">
+                              Producto {getSortIcon('name')}
+                            </Button>
+                          </TableHead>
+                          <TableHead>
+                            <Button variant="ghost" size="sm" onClick={() => handleSort('category')} className="h-8 px-2">
+                              Categoría {getSortIcon('category')}
+                            </Button>
+                          </TableHead>
+                          <TableHead>
+                            <Button variant="ghost" size="sm" onClick={() => handleSort('unit')} className="h-8 px-2">
+                              Unidad {getSortIcon('unit')}
+                            </Button>
+                          </TableHead>
                           <TableHead className="text-right">Precio ($)</TableHead>
                           <TableHead className="text-center">Activo</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {products.map((product) => (
+                        {filteredAndSortedProducts.map((product) => (
                           <TableRow key={product.id}>
                             <TableCell className="font-medium">
                               {product.name}
@@ -475,7 +540,7 @@ export default function AdminPreciosPage() {
                                 min="0"
                                 value={getProductPrice(product.id)}
                                 onChange={(e) => handlePriceChange(product.id, e.target.value)}
-                                className="max-w-[140px] ml-auto text-right"
+                                className="max-w-[180px] ml-auto text-right"
                                 placeholder="0.00"
                               />
                             </TableCell>
