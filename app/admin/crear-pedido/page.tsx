@@ -287,6 +287,8 @@ export default function CrearPedidoPage() {
         product_id: item.product.id,
         product_name: item.product.name,
         product_description: item.product.description || null,
+        product_unit: item.product.unit || null,
+        product_units_per_pack: item.product.units_per_pack || null,
         quantity: item.quantity,
         unit_price: item.customPrice,
         custom_price: item.customPrice,

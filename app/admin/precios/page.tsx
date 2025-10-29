@@ -36,7 +36,9 @@ import {
   ArrowUpDown,
   ArrowUp,
   ArrowDown,
-  Search
+  Search,
+  Download,
+  Upload
 } from 'lucide-react'
 
 interface ProductPrice {
@@ -64,6 +66,8 @@ export default function AdminPreciosPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [sortField, setSortField] = useState<keyof Product>('name')
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc')
+  const [uploading, setUploading] = useState(false)
+  const [showUploadDialog, setShowUploadDialog] = useState(false)
 
   useEffect(() => {
     checkAdmin()
@@ -338,6 +342,134 @@ export default function AdminPreciosPage() {
       return 0
     })
 
+  const downloadCSV = () => {
+    if (!selectedList) {
+      toast.error('Seleccioná una lista de precios primero')
+      return
+    }
+
+    // Create CSV content
+    const headers = ['id', 'name', 'description', 'category', 'unit', 'price']
+    const rows = products.map(product => {
+      const existingPrice = prices.find(p => p.product_id === product.id)
+      return [
+        product.id,
+        `"${product.name || ''}"`,
+        `"${product.description || ''}"`,
+        `"${product.category || ''}"`,
+        `"${product.unit || ''}"`,
+        existingPrice?.price || ''
+      ].join(',')
+    })
+
+    const csv = [headers.join(','), ...rows].join('\n')
+
+    // Create blob and download
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+    const link = document.createElement('a')
+    const url = URL.createObjectURL(blob)
+    link.setAttribute('href', url)
+    link.setAttribute('download', `precios_${selectedList.name.toLowerCase().replace(/\s+/g, '_')}.csv`)
+    link.style.visibility = 'hidden'
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+
+    toast.success('CSV descargado correctamente')
+  }
+
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (!selectedList) {
+      toast.error('Seleccioná una lista de precios primero')
+      return
+    }
+
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    setUploading(true)
+
+    try {
+      const text = await file.text()
+      const lines = text.split('\n').filter(line => line.trim())
+
+      if (lines.length < 2) {
+        throw new Error('El CSV está vacío o no tiene datos')
+      }
+
+      const headers = lines[0].split(',').map(h => h.trim())
+      const idIndex = headers.indexOf('id')
+      const priceIndex = headers.indexOf('price')
+
+      if (idIndex === -1 || priceIndex === -1) {
+        throw new Error('El CSV debe tener columnas "id" y "price"')
+      }
+
+      const updates = []
+      const inserts = []
+
+      for (let i = 1; i < lines.length; i++) {
+        const values = lines[i].split(',').map(v => v.trim().replace(/^"|"$/g, ''))
+        const productId = values[idIndex]
+        const priceStr = values[priceIndex]
+
+        if (!productId || !priceStr) continue
+
+        const price = parseFloat(priceStr)
+        if (isNaN(price) || price < 0) continue
+
+        const existing = prices.find(p => p.product_id === productId)
+
+        if (existing) {
+          updates.push(
+            supabase
+              .from('product_prices')
+              .update({ price, is_active: true })
+              .eq('id', existing.id)
+          )
+        } else {
+          inserts.push({
+            product_id: productId,
+            price_list_id: selectedList.id,
+            price,
+            is_active: true
+          })
+        }
+      }
+
+      // Execute updates
+      if (updates.length > 0) {
+        const results = await Promise.all(updates)
+        const errors = results.filter(r => r.error)
+        if (errors.length > 0) {
+          console.error('Errores en updates:', errors)
+          throw new Error('Error al actualizar algunos precios')
+        }
+      }
+
+      // Execute inserts
+      if (inserts.length > 0) {
+        const { error: insertError } = await supabase
+          .from('product_prices')
+          .insert(inserts)
+
+        if (insertError) throw insertError
+      }
+
+      toast.success(`${updates.length + inserts.length} precios actualizados correctamente`)
+      setShowUploadDialog(false)
+      loadPrices(selectedList.id)
+
+      // Reset file input
+      event.target.value = ''
+    } catch (error: any) {
+      console.error('Error uploading CSV:', error)
+      toast.error(error.message || 'Error al procesar el CSV')
+    } finally {
+      setUploading(false)
+    }
+  }
+
   if (loading) {
     return (
       <div className="container mx-auto px-4 py-12">
@@ -365,6 +497,18 @@ export default function AdminPreciosPage() {
             </p>
           </div>
           <div className="flex gap-3">
+            {selectedList && (
+              <>
+                <Button variant="outline" onClick={downloadCSV}>
+                  <Download className="mr-2 h-4 w-4" />
+                  Descargar CSV
+                </Button>
+                <Button variant="outline" onClick={() => setShowUploadDialog(true)}>
+                  <Upload className="mr-2 h-4 w-4" />
+                  Subir CSV
+                </Button>
+              </>
+            )}
             {hasChanges && (
               <>
                 <Button variant="outline" onClick={cancelChanges} disabled={saving}>
@@ -655,6 +799,65 @@ export default function AdminPreciosPage() {
               </Button>
             </DialogFooter>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Upload CSV Dialog */}
+      <Dialog open={showUploadDialog} onOpenChange={setShowUploadDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Subir CSV de Precios</DialogTitle>
+            <DialogDescription>
+              Seleccioná el archivo CSV con los precios actualizados para {selectedList?.name}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="rounded-lg border-2 border-dashed border-muted-foreground/25 p-8 text-center">
+              <Upload className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+              <p className="text-sm text-muted-foreground mb-4">
+                El CSV debe tener las columnas: <strong>id</strong>, <strong>name</strong>, <strong>description</strong>, <strong>category</strong>, <strong>unit</strong>, <strong>price</strong>
+              </p>
+              <Input
+                type="file"
+                accept=".csv"
+                onChange={handleFileUpload}
+                disabled={uploading}
+                className="cursor-pointer"
+              />
+            </div>
+
+            {uploading && (
+              <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Procesando CSV...
+              </div>
+            )}
+
+            <div className="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+              <h4 className="font-medium text-blue-900 dark:text-blue-100 mb-2 flex items-center gap-2">
+                <FileText className="h-4 w-4" />
+                Instrucciones:
+              </h4>
+              <ol className="text-sm text-blue-800 dark:text-blue-200 space-y-1 ml-5 list-decimal">
+                <li>Descargá el CSV usando el botón "Descargar CSV"</li>
+                <li>Editá la columna "price" en Excel con los nuevos precios</li>
+                <li>Guardá el archivo como CSV (sin modificar las otras columnas)</li>
+                <li>Subí el archivo aquí</li>
+              </ol>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setShowUploadDialog(false)}
+              disabled={uploading}
+            >
+              Cancelar
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

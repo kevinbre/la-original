@@ -63,6 +63,7 @@ export default function AdminPedidoDetallePage() {
   const [priceLists, setPriceLists] = useState<PriceList[]>([])
   const [loading, setLoading] = useState(true)
   const [customPrices, setCustomPrices] = useState<{ [key: string]: string }>({})
+  const [customQuantities, setCustomQuantities] = useState<{ [key: string]: string }>({})
   const [hasChanges, setHasChanges] = useState(false)
   const [saving, setSaving] = useState(false)
   const [selectedPriceList, setSelectedPriceList] = useState<string>('')
@@ -110,6 +111,9 @@ export default function AdminPedidoDetallePage() {
           id,
           product_id,
           product_name,
+          product_description,
+          product_unit,
+          product_units_per_pack,
           quantity,
           unit_price,
           custom_price,
@@ -131,10 +135,13 @@ export default function AdminPedidoDetallePage() {
       setOrder(orderData)
 
       const prices: { [key: string]: string } = {}
+      const quantities: { [key: string]: string } = {}
       data.order_items?.forEach((item: any) => {
         prices[item.id] = item.custom_price?.toString() || item.unit_price?.toString() || ''
+        quantities[item.id] = item.quantity?.toString() || '1'
       })
       setCustomPrices(prices)
+      setCustomQuantities(quantities)
     }
 
     setLoading(false)
@@ -297,6 +304,18 @@ export default function AdminPedidoDetallePage() {
     setHasChanges(true)
   }
 
+  const handleQuantityChange = (itemId: string, quantity: string) => {
+    setCustomQuantities({ ...customQuantities, [itemId]: quantity })
+    setHasChanges(true)
+  }
+
+  const formatNumber = (num: number) => {
+    return new Intl.NumberFormat('es-AR', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    }).format(num)
+  }
+
   const saveAllPrices = async () => {
     if (!order) return
 
@@ -308,10 +327,12 @@ export default function AdminPedidoDetallePage() {
 
       for (const item of order.items) {
         const priceStr = customPrices[item.id]
+        const quantityStr = customQuantities[item.id]
         const numPrice = parseFloat(priceStr)
+        const numQuantity = parseInt(quantityStr)
 
-        if (!isNaN(numPrice) && numPrice >= 0) {
-          const subtotal = numPrice * item.quantity
+        if (!isNaN(numPrice) && numPrice >= 0 && !isNaN(numQuantity) && numQuantity > 0) {
+          const subtotal = numPrice * numQuantity
 
           updates.push(
             supabase
@@ -319,6 +340,7 @@ export default function AdminPedidoDetallePage() {
               .update({
                 custom_price: numPrice,
                 unit_price: numPrice,
+                quantity: numQuantity,
                 subtotal,
               })
               .eq('id', item.id)
@@ -334,7 +356,7 @@ export default function AdminPedidoDetallePage() {
 
       const errors = results.filter(r => r.error)
       if (errors.length > 0) {
-        throw new Error('Error al actualizar algunos precios')
+        throw new Error('Error al actualizar algunos items')
       }
 
       await supabase
@@ -342,12 +364,12 @@ export default function AdminPedidoDetallePage() {
         .update({ total: newTotal })
         .eq('id', order.id)
 
-      toast.success('Precios guardados correctamente')
+      toast.success('Cambios guardados correctamente')
       setHasChanges(false)
       loadOrder()
     } catch (error) {
-      console.error('Error saving prices:', error)
-      toast.error('Error al guardar precios')
+      console.error('Error saving changes:', error)
+      toast.error('Error al guardar cambios')
     } finally {
       setSaving(false)
     }
@@ -355,10 +377,13 @@ export default function AdminPedidoDetallePage() {
 
   const cancelChanges = () => {
     const originalPrices: { [key: string]: string } = {}
+    const originalQuantities: { [key: string]: string } = {}
     order?.items.forEach((item: any) => {
       originalPrices[item.id] = item.custom_price?.toString() || item.unit_price?.toString() || ''
+      originalQuantities[item.id] = item.quantity?.toString() || '1'
     })
     setCustomPrices(originalPrices)
+    setCustomQuantities(originalQuantities)
     setHasChanges(false)
   }
 
@@ -761,44 +786,70 @@ export default function AdminPedidoDetallePage() {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Producto</TableHead>
+                      <TableHead>Descripción</TableHead>
+                      <TableHead>Unidad</TableHead>
                       <TableHead className="text-center">Cantidad</TableHead>
                       <TableHead className="text-right">Precio Unit.</TableHead>
                       <TableHead className="text-right">Subtotal</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {order.items.map((item) => (
-                      <TableRow key={item.id}>
-                        <TableCell className="font-medium">
-                          {item.product_name}
-                        </TableCell>
-                        <TableCell className="text-center">
-                          <Badge variant="outline">{item.quantity}</Badge>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <Input
-                            type="number"
-                            step="0.01"
-                            min="0"
-                            value={customPrices[item.id] || ''}
-                            onChange={(e) => handlePriceChange(item.id, e.target.value)}
-                            className="max-w-[120px] ml-auto text-right"
-                            placeholder="0.00"
-                          />
-                        </TableCell>
-                        <TableCell className="text-right font-medium">
-                          ${item.subtotal?.toFixed(2) || '0.00'}
-                        </TableCell>
-                      </TableRow>
-                    ))}
+                    {order.items.map((item) => {
+                      const quantity = parseInt(customQuantities[item.id] || '1')
+                      const price = parseFloat(customPrices[item.id] || '0')
+                      const subtotal = quantity * price
+                      const itemAny = item as any
+                      const unit = itemAny.product_unit || 'unidad'
+                      const unitsPerPack = itemAny.product_units_per_pack
+
+                      return (
+                        <TableRow key={item.id}>
+                          <TableCell className="font-medium">
+                            {item.product_name}
+                          </TableCell>
+                          <TableCell className="text-sm text-muted-foreground">
+                            {itemAny.product_description || '-'}
+                          </TableCell>
+                          <TableCell className="text-sm text-muted-foreground">
+                            {unit}
+                            {unitsPerPack && (
+                              <span className="text-muted-foreground"> x{unitsPerPack}</span>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <Input
+                              type="number"
+                              min="1"
+                              value={customQuantities[item.id] || ''}
+                              onChange={(e) => handleQuantityChange(item.id, e.target.value)}
+                              className="max-w-[80px] mx-auto text-center"
+                            />
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <Input
+                              type="number"
+                              step="0.01"
+                              min="0"
+                              value={customPrices[item.id] || ''}
+                              onChange={(e) => handlePriceChange(item.id, e.target.value)}
+                              className="max-w-[120px] ml-auto text-right"
+                              placeholder="0.00"
+                            />
+                          </TableCell>
+                          <TableCell className="text-right font-medium">
+                            ${formatNumber(subtotal)}
+                          </TableCell>
+                        </TableRow>
+                      )
+                    })}
                   </TableBody>
                   <TableFooter>
                     <TableRow>
-                      <TableCell colSpan={3} className="text-right font-semibold">
+                      <TableCell colSpan={5} className="text-right font-semibold">
                         TOTAL
                       </TableCell>
                       <TableCell className="text-right text-lg font-bold">
-                        ${order.total?.toFixed(2) || '0.00'}
+                        ${formatNumber(order.total || 0)}
                       </TableCell>
                     </TableRow>
                   </TableFooter>

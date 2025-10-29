@@ -3,6 +3,14 @@ import autoTable from 'jspdf-autotable'
 import { Invoice, OrderWithItems } from '@/types'
 import { supabase } from '@/lib/supabase'
 
+// Helper function to format numbers with Argentine format (1.234,56)
+function formatCurrency(amount: number): string {
+  return new Intl.NumberFormat('es-AR', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  }).format(amount)
+}
+
 // Helper function to load image as base64
 async function loadImageAsBase64(url: string): Promise<string | null> {
   try {
@@ -219,24 +227,40 @@ export async function generateInvoicePDF(
   // Items table
   yPos += 10
   const items = type === 'invoice'
-    ? (invoice as Invoice).items.map(item => [
-        item.product_name,
-        (item as any).product_description || '',
-        item.quantity.toString(),
-        `$${item.unit_price.toFixed(2)}`,
-        `$${item.subtotal.toFixed(2)}`
-      ])
-    : (invoice as OrderWithItems).items.map(item => [
-        item.product_name,
-        item.product_description || '',
-        item.quantity.toString(),
-        item.unit_price ? `$${item.unit_price.toFixed(2)}` : 'A cotizar',
-        item.subtotal ? `$${item.subtotal.toFixed(2)}` : 'A cotizar'
-      ])
+    ? (invoice as Invoice).items.map(item => {
+        const itemAny = item as any
+        const unit = itemAny.product_unit || 'unidad'
+        const unitsPerPack = itemAny.product_units_per_pack
+        const unitDisplay = unitsPerPack ? `${unit} x${unitsPerPack}` : unit
+
+        return [
+          item.product_name,
+          itemAny.product_description || '',
+          unitDisplay,
+          item.quantity.toString(),
+          `$${formatCurrency(item.unit_price)}`,
+          `$${formatCurrency(item.subtotal)}`
+        ]
+      })
+    : (invoice as OrderWithItems).items.map(item => {
+        const itemAny = item as any
+        const unit = itemAny.product_unit || 'unidad'
+        const unitsPerPack = itemAny.product_units_per_pack
+        const unitDisplay = unitsPerPack ? `${unit} x${unitsPerPack}` : unit
+
+        return [
+          item.product_name,
+          item.product_description || '',
+          unitDisplay,
+          item.quantity.toString(),
+          item.unit_price ? `$${formatCurrency(item.unit_price)}` : 'A cotizar',
+          item.subtotal ? `$${formatCurrency(item.subtotal)}` : 'A cotizar'
+        ]
+      })
 
   autoTable(doc, {
     startY: yPos,
-    head: [['Producto', 'Descripción', 'Cant.', 'Precio Unit.', 'Subtotal']],
+    head: [['Producto', 'Descripción', 'Unidad', 'Cant.', 'Precio Unit.', 'Subtotal']],
     body: items,
     theme: 'plain',
     headStyles: {
@@ -251,13 +275,16 @@ export async function generateInvoicePDF(
       cellPadding: 4,
       lineColor: [220, 220, 220],
       lineWidth: 0.1,
+      overflow: 'linebreak',
+      cellWidth: 'wrap',
     },
     columnStyles: {
-      0: { cellWidth: 45, fontStyle: 'bold' },
-      1: { cellWidth: 60, fontSize: 8, textColor: [80, 80, 80] },
-      2: { cellWidth: 20, halign: 'center' },
-      3: { cellWidth: 30, halign: 'right' },
-      4: { cellWidth: 30, halign: 'right', fontStyle: 'bold', textColor: orangeColor },
+      0: { cellWidth: 40, fontStyle: 'bold', overflow: 'linebreak' },
+      1: { cellWidth: 35, fontSize: 8, textColor: [80, 80, 80], overflow: 'linebreak', cellPadding: 2 },
+      2: { cellWidth: 22, fontSize: 8, textColor: [80, 80, 80], overflow: 'linebreak' },
+      3: { cellWidth: 20, halign: 'center' },
+      4: { cellWidth: 32, halign: 'right', minCellWidth: 32 },
+      5: { cellWidth: 32, halign: 'right', fontStyle: 'bold', textColor: orangeColor, minCellWidth: 32 },
     },
     alternateRowStyles: {
       fillColor: [250, 250, 250]
@@ -292,12 +319,12 @@ export async function generateInvoicePDF(
   doc.setTextColor(80, 80, 80)
   doc.setFont('helvetica', 'normal')
   doc.text('Subtotal:', 155, totalYPos, { align: 'right' })
-  doc.text(`$${subtotal.toFixed(2)}`, 195, totalYPos, { align: 'right' })
+  doc.text(`$${formatCurrency(subtotal)}`, 195, totalYPos, { align: 'right' })
 
   if (type === 'invoice' && (invoice as Invoice).tax > 0) {
     totalYPos += 6
     doc.text('IVA:', 155, totalYPos, { align: 'right' })
-    doc.text(`$${(invoice as Invoice).tax.toFixed(2)}`, 195, totalYPos, { align: 'right' })
+    doc.text(`$${formatCurrency((invoice as Invoice).tax)}`, 195, totalYPos, { align: 'right' })
   }
 
   // Total line
@@ -311,7 +338,7 @@ export async function generateInvoicePDF(
   doc.setTextColor(...orangeColor)
   doc.setFont('helvetica', 'bold')
   doc.text('TOTAL:', 155, totalYPos, { align: 'right' })
-  doc.text(`$${invoice.total.toFixed(2)}`, 195, totalYPos, { align: 'right' })
+  doc.text(`$${formatCurrency(invoice.total)}`, 195, totalYPos, { align: 'right' })
 
   // Footer - bottom of page
   const footerY = 280
